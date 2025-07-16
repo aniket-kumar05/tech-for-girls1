@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Tech For Girls Registration</title>
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+      .form-container {
+        max-width: 500px;
+        margin: auto;
+        margin-top: 50px;
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    <div class="container">
+      <div class="form-container">
+        <h4 class="text-center mb-4">Tech For Girls Registration</h4>
+        <form id="submit-to-google-sheet">
+          <div class="form-group">
+            <label for="name">Name:</label>
+            <input class="form-control" type="text" name="name" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Email:</label>
+            <input class="form-control" type="email" name="email" required />
+          </div>
+          <div class="form-group">
+            <label for="contact_number">Contact Number:</label>
+            <input class="form-control" type="text" name="contact_number" required />
+          </div>
+          <div class="form-group">
+            <label for="gender">Gender:</label>
+            <select class="form-control" name="gender" required>
+              <option value="" disabled selected hidden>Choose...</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="message">Message:</label>
+            <textarea class="form-control" name="message" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="screenshot">Upload Screenshot:</label>
+            <input type="file" name="screenshot" class="form-control" required />
+          </div>
+          <div class="form-group text-center">
+            <button type="button" class="btn btn-success" id="whatsappBtn">Share on WhatsApp</button>
+            <p id="clickCounter" class="mt-2">Click count: 0/5</p>
+            <p id="shareStatus" class="text-info"></p>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Submit</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const scriptURL = "https://script.google.com/macros/s/AKfycbzcOVcoCunYkiiXMo0Lvg2xAUKhx31tZ20M4uUle40jpF_PK8T7lAH4rSMYr__kVEeEDA/exec";
+
+      const form = document.getElementById("submit-to-google-sheet");
+      let shareCount = 0;
+      const maxShares = 5;
+
+      const whatsappBtn = document.getElementById("whatsappBtn");
+      const clickCounter = document.getElementById("clickCounter");
+      const shareStatus = document.getElementById("shareStatus");
+
+      whatsappBtn.addEventListener("click", () => {
+        const message = "Hey Buddy, Join Tech For Girls Community!";
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappURL = `https://wa.me/?text=${encodedMessage}`;
+        window.open(whatsappURL, "_blank");
+
+        if (shareCount < maxShares) {
+          shareCount++;
+          clickCounter.textContent = `Click count: ${shareCount}/${maxShares}`;
+          if (shareCount === maxShares) {
+            shareStatus.textContent = "✅ Sharing complete. You can now submit the form.";
+            shareStatus.classList.remove("text-info");
+            shareStatus.classList.add("text-success");
+          }
+        }
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        if (shareCount < maxShares) {
+          Swal.fire("Please share on WhatsApp at least 5 times before submitting.");
+          return;
+        }
+
+        const formData = new FormData(form);
+
+        fetch(scriptURL, {
+          method: "POST",
+          body: formData,
+        })
+          .then((res) => res.json())
+          .then((result) => {
+            if (result.result === "success") {
+              Swal.fire("🎉 Success", "Your response has been recorded!", "success");
+              form.querySelectorAll("input, textarea, select, button").forEach((el) => el.disabled = true);
+              localStorage.setItem("submitted", "true");
+            } else {
+              Swal.fire("Error", result.message || "Unknown error", "error");
+            }
+          })
+          .catch((err) => {
+            console.error("Fetch error:", err);
+            Swal.fire("Error", "Submission failed. Please try again later.", "error");
+          });
+      });
+
+      window.addEventListener("DOMContentLoaded", () => {
+        if (localStorage.getItem("submitted")) {
+          form.querySelectorAll("input, textarea, select, button").forEach((el) => el.disabled = true);
+          Swal.fire("⛔️ Already Submitted", "You have already submitted this form.", "info");
+        }
+      });
+    </script>
+  </body>
+</html>
